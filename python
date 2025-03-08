@@ -1,0 +1,87 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from time import sleep
+import os
+
+# BrowserStack credentials
+username = os.getenv('BROWSERSTACK_USERNAME') # Set your username here or in your environment
+access_key = os.getenv('BROWSERSTACK_ACCESS_KEY') # Set your access key here or in your environment
+
+# Desired capabilities for different browsers
+desired_caps = {
+    'chrome': {
+        'browser': 'Chrome',
+        'os': 'Windows',
+        'os_version': '10',
+        'browserstack.debug': 'true'
+    },
+    'firefox': {
+        'browser': 'Firefox',
+        'os': 'Windows',
+        'os_version': '10',
+        'browserstack.debug': 'true'
+    },
+    'safari': {
+        'browser': 'Safari',
+        'os': 'OS X',
+        'os_version': 'Monterey',
+        'browserstack.debug': 'true'
+    },
+    'edge': {
+        'browser': 'Edge',
+        'os': 'Windows',
+        'os_version': '10',
+        'browserstack.debug': 'true'
+    }
+}
+
+# Test function to test a form submission across different browsers
+def run_test(browser):
+    url = "https://your-form-url.com"  # Replace with your login/form submission page URL
+    capabilities = {
+        'browser': desired_caps[browser]['browser'],
+        'os': desired_caps[browser]['os'],
+        'os_version': desired_caps[browser]['os_version'],
+        'name': f"Form Submission Test on {browser}",
+        'browserstack.user': username,
+        'browserstack.key': access_key
+    }
+
+    # Start a new session
+    driver = webdriver.Remote(
+        command_executor=f"https://{username}:{access_key}@hub-cloud.browserstack.com/wd/hub",
+        desired_capabilities=capabilities
+    )
+    
+    try:
+        # Open the form page
+        driver.get(url)
+        
+        # Locate form elements (this is just an example, modify according to your form)
+        username_field = driver.find_element(By.NAME, "username")
+        password_field = driver.find_element(By.NAME, "password")
+        submit_button = driver.find_element(By.NAME, "submit")
+        
+        # Fill in the form
+        username_field.send_keys("testuser")
+        password_field.send_keys("testpassword")
+        submit_button.click()
+        
+        # Wait for the form to submit and the next page to load
+        sleep(5)
+        
+        # Check if submission was successful (modify based on actual success message)
+        success_message = driver.find_element(By.ID, "success")
+        assert "Welcome" in success_message.text
+        
+    except Exception as e:
+        print(f"Test failed on {browser}: {e}")
+    
+    finally:
+        driver.quit()
+
+# Run the test across all browsers
+for browser in ['chrome', 'firefox', 'safari', 'edge']:
+    run_test(browser)
